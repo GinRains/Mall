@@ -1,7 +1,7 @@
 <template>
   <div class="goods-item" @click="itemClick">
     <a href="javascript:;">
-      <img :src="GoodsItem.show.img" @load="imgLoad">
+      <img v-lazy="showImage" @load="imgLoad">
     </a>
     <div class="goods-info">
       <p>{{GoodsItem.title}}</p>
@@ -26,10 +26,16 @@
       imgLoad() {
         // console.log('imgLoad')
         // 向总线发送itemImgLoad事件
+
         this.$bus.$emit('itemImgLoad')
       },
       itemClick() {
         this.$router.push('/detail/' + this.GoodsItem.iid)
+      }
+    },
+    computed: {
+      showImage() {
+        return this.GoodsItem.image || this.GoodsItem.show.img
       }
     }
   }

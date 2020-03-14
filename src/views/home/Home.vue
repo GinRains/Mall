@@ -33,17 +33,18 @@
   import TabControl from "components/content/tabControl/TabControl";
   import GoodsList from "components/content/goods/GoodsList"
   import Scroll from 'components/common/Scroll/Scroll'
-  import BackTop from "components/content/backTop/BackTop";
 
   import HomeSwiper from "./childComps/HomeSwiper";
   import HomeRecommend from "./childComps/HomeRecommend";
   import HomeFeature from "./childComps/HomeFeature";
 
   import {getHomeMultidata, getHomeGoods} from "network/home";
-  import {debounce} from "common/utils";
+  import {BACK_POSITION} from "common/const";
+  import {itemListenerMixin, backTopMixin} from "common/mixin";
 
   export default {
     name: "Home",
+    mixins: [itemListenerMixin, backTopMixin],
     data() {
       return {
         banners: [],
@@ -65,7 +66,6 @@
       TabControl,
       GoodsList,
       Scroll,
-      BackTop,
 
       HomeSwiper,
       HomeRecommend,
@@ -93,13 +93,10 @@
         this.$refs.tabControl2.currentIndex = index
       },
 
-      backClick() {
-        this.$refs.scroll.scrollTo(0, 0)
-      },
       controlScroll(position) {
         // console.log(position)
         // 1. 判断BackTop是否显示
-        this.isShowBackTop = Math.abs(position.y) >= 1000
+        this.isShowBackTop = Math.abs(position.y) >= BACK_POSITION
 
         // 2. 决定tabControl是否吸顶（position: fixed
         this.isTabFixed = -(position.y) >= this.tabOffsetTop
@@ -139,13 +136,16 @@
     },
     activated() {
       // console.log('activated')
-      this.$refs.scroll.scrollTo(0, this.saveY, 0)
       this.$refs.scroll.refresh()
+      this.$refs.scroll.scrollTo(0, this.saveY, 400)
     },
     deactivated() {
-      // console.log('deactivated')
+      // 1. 保存y值
       this.saveY = this.$refs.scroll.getScrollY()
       // console.log(this.saveY)
+
+      // 2. 取消全局事件监听
+      this.$bus.$off('itemImgLoad', this.itemImgListener)
     },
     created() {
       // 请求多个数据
@@ -156,17 +156,6 @@
       this.getHomeGoods('new')
       this.getHomeGoods('sell')
     },
-    mounted() {
-      // 拿到tabControl的offsetTop
-      // 所有的组件都由一个属性$el: 用于获取组件中的元素
-      // console.log(this.$refs.tabControl.$el.offsetTop)
-
-      const refresh = debounce(this.$refs.scroll.refresh, 50)
-      // 监听总线发出的itemImgLoad事件
-      this.$bus.$on('itemImgLoad', () => {
-        refresh()
-      })
-    }
   }
 </script>
 
@@ -174,6 +163,7 @@
   #home {
     /*padding-top: 44px;*/
     position: relative;
+    font-weight: 600;
 
     height: 100vh;
   }
